@@ -1,0 +1,30 @@
+name: publish-apk
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/release.yml'
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Fetch and verify APK
+        run: |
+          curl -fL --retry 3 -o MobileSimulator.apk https://d.uguu.se/XvizrcrPQuSr.bin
+          echo "18289f73aa6c708302b8beacca21b6b7c3fe8e5cd6bd576eb51c15235da6f3ff  MobileSimulator.apk" | sha256sum -c -
+      - name: Tidy repository files
+        run: |
+          [ -f 8-icon.jpg ] && git mv 8-icon.jpg icon.jpg || true
+          for f in $(ls | grep -E '^[0-9]+-' || true); do git rm -f "$f"; done
+          git config user.name "github-actions"
+          git config user.email "actions@users.noreply.github.com"
+          git diff --cached --quiet || git commit -m "Tidy files"
+          git push || true
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v1 MobileSimulator.apk --title "Mobile Simulator" --notes "Mobile Simulator for Android"

